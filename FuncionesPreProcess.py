@@ -30,7 +30,7 @@ def bilateral_filter(image, d, sigma_color, sigma_space):
                     peso = np.exp(-diferencia**2 / (2 * sigma_color**2) - distancia**2 / (2 * sigma_space**2))
                     peso_t += peso
 
-                    matrix_n += vecino * peso
+                    matriz_n += vecino * peso
            #Ajuste los valores de la matriz
             matriz_n /= peso_t
             imagen_n[i, j] = matriz_n
