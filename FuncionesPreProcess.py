@@ -1,4 +1,6 @@
 import numpy as np 
+import os
+from PIL import Image
 
 def bilateral_filter(image, d, sigma_color, sigma_space):
     # Obtener dimensiones de la imagen
@@ -96,7 +98,6 @@ def espejoY(imagen):
     # Obtener el espejo de la imagen
     for fila in range(alto):
         espejo[fila, :] = imagen[fila, ::-1]
-        
     return espejo
 
 
@@ -108,3 +109,44 @@ def convertAbs(arr):
     # Convertir los valores a tipo de datos sin signo
     arr_abs = arr_scaled.astype(np.uint8)
     return arr_abs
+
+
+def vectorizar(carpeta, label):
+    archivos = os.listdir(carpeta)
+
+    # Lista para almacenar los vectores de las imágenes
+    vectores_imagenes = []
+
+    # Iterar sobre los archivos
+    for archivo in archivos:
+        # Comprobar si es un archivo de imagen
+        #if archivo.endswith(".jpg") or archivo.endswith(".png"):
+            # Ruta completa de la imagen
+            ruta_imagen = os.path.join(carpeta, archivo)
+            
+            # Cargar la imagen
+            imagen = Image.open(ruta_imagen)
+
+            # Redimensiona la imagen a 8x8 píxeles
+            imagen = imagen.resize((50, 125))
+
+            # Convierte la imagen a escala de grises
+            imagen = imagen.convert("L")
+
+            # Convierte la imagen a un array de NumPy
+            array_imagen = np.array(imagen)
+
+            # Aplana el array de imagen a un vector de 1x64
+            vector = array_imagen.flatten()
+            
+            # Crea una lista con la etiqueta y el nombre del archivo
+            etiqueta_archivo = [label, archivo]
+
+            # Agrega la lista al final del vector
+            vector_con_etiqueta_archivo = np.append(vector, etiqueta_archivo)
+
+            # Agrega el vector a la lista de vectores de imágenes
+            vectores_imagenes.append(vector_con_etiqueta_archivo)
+
+    # Convierte la lista de vectores en una matriz de NumPy
+    return np.array(vectores_imagenes)
