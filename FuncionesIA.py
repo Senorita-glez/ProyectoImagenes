@@ -60,6 +60,12 @@ class KNNClassifier:
 
         return y_pred
 
+def PositiveData(matriz):
+    nombres = matriz[1, :]
+    valores = matriz[0, :]
+    nombres_con_uno = nombres[valores == '1']
+    return nombres_con_uno
+
 def exclude(matriz, indice):
     filas_seleccionadas = []
     for i, fila in enumerate(matriz):
@@ -170,7 +176,4 @@ class KMeans:
     def predict(self, data):
         labels = self.assign_clusters(data)
         return labels
-    
-def positiveData(matrix):
-    filtred = matrix[:, matrix[1, :] == 1]
-    return filtred
+

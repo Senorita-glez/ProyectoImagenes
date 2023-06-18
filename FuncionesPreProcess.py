@@ -1,4 +1,6 @@
-import numpy as np 
+import numpy as np
+import os 
+from PIL import Image
 
 def bilateral_filter(image, d, sigma_color, sigma_space):
     #MEdidas de la imagen de ingreso
@@ -70,7 +72,6 @@ def med_filter(imagen, kernel_size):
 
 
 def espejo(imagen):
-
     alto = imagen.shape[0]
     espejo = np.empty_like(imagen)
     #Traslados de las filas dentro de la nueva matriz
@@ -81,10 +82,34 @@ def espejo(imagen):
 
 
 def convert_Abs(imagen):
-    
     # Normalizar la matriz en el rango 0-255
     normalizacion = (imagen - np.min(imagen)) * (255.0 / (np.max(imagen) - np.min(imagen)))
     nueva = np.round(normalizacion)
     arr = nueva.astype(np.uint8)
-
     return arr
+
+def vectorizar(carpeta, label):
+    archivos = os.listdir(carpeta)
+
+    vectores_imagenes = []
+
+    for archivo in archivos:
+            ruta_imagen = os.path.join(carpeta, archivo)
+            
+            imagen = Image.open(ruta_imagen)
+
+            imagen = imagen.resize((50, 125))
+
+            imagen = imagen.convert("L")
+
+            array_imagen = np.array(imagen)
+
+            vector = array_imagen.flatten()
+
+            etiqueta_archivo = [label, archivo]
+
+            vector_con_etiqueta_archivo = np.append(vector, etiqueta_archivo)
+
+            vectores_imagenes.append(vector_con_etiqueta_archivo)
+
+    return np.array(vectores_imagenes)
