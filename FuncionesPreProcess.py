@@ -1,4 +1,6 @@
 import numpy as np 
+import os
+from PIL import Image
 
 def bilateral_filter(image, d, sigma_color, sigma_space):
     #MEdidas de la imagen de ingreso
