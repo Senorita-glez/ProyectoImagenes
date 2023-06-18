@@ -3,150 +3,90 @@ import os
 from PIL import Image
 
 def bilateral_filter(image, d, sigma_color, sigma_space):
-    # Obtener dimensiones de la imagen
+    #MEdidas de la imagen de ingreso
     height, width = image.shape
-    # Crear una imagen vacía para almacenar el resultado del filtrado bilateral
-    filtered_image = np.zeros_like(image)
-    # Definir el tamaño de la ventana del vecindario
-    half_window = d // 2
-    # Iterar sobre todos los píxeles de la imagen
+    imagen_n = np.zeros_like(image)
+    margin = d // 2
+   
     for i in range(height):
         for j in range(width):
             pixel = image[i, j]
+            #Obtener el kernel en donde se encuentra los vecinos del pixel
+            h_min = max(i - margin, 0)
+            h_max = min(i + margin + 1, height)
+            w_min = max(j - margin, 0)
+            w_max = min(j + margin + 1, width)
 
-            # Definir los límites de la ventana del vecindario
-            i_min = max(i - half_window, 0)
-            i_max = min(i + half_window + 1, height)
-            j_min = max(j - half_window, 0)
-            j_max = min(j + half_window + 1, width)
+            matriz_n = 0
+            peso_t = 0
 
-            # Inicializar el píxel filtrado
-            filtered_pixel = 0.0
-            total_weight = 0.0
+            for k in range(h_min, h_max):
+                for l in range(w_min, w_max):
+                    vecino = image[k, l]
+                    # Calcular diferencia entre vecino y pixel seleccionado
+                    diferencia = abs(int(vecino) - int(pixel))
+                    distancia = np.sqrt((k - i) ** 2 + (l - j) ** 2)
+                    # Se calcula su peso en fucnión de la diferencia y distancia 
+                    peso = np.exp(-diferencia**2 / (2 * sigma_color**2) - distancia**2 / (2 * sigma_space**2))
+                    peso_t += peso
 
-            # Iterar sobre los píxeles en el vecindario
-            for k in range(i_min, i_max):
-                for l in range(j_min, j_max):
-                    neighbor = image[k, l]
+                    matrix_n += vecino * peso
+           #Ajuste los valores de la matriz
+            matriz_n /= peso_t
+            imagen_n[i, j] = matriz_n
 
-                    # Calcular la diferencia de color
-                    color_diff = abs(int(neighbor) - int(pixel))
-
-                    # Calcular la diferencia de posición
-                    position_diff = np.sqrt((k - i) ** 2 + (l - j) ** 2)
-
-                    # Calcular el peso del vecino en función de las diferencias de color y posición
-                    weight = np.exp(-color_diff**2 / (2 * sigma_color**2) - position_diff**2 / (2 * sigma_space**2))
-
-                    # Acumular el peso en el total
-                    total_weight += weight
-
-                    # Acumular el valor del vecino ponderado por el peso
-                    filtered_pixel += neighbor * weight
-
-            # Normalizar el valor filtrado dividiendo por el total de pesos
-            filtered_pixel /= total_weight
-
-            # Asignar el valor filtrado al píxel correspondiente en la imagen filtrada
-            filtered_image[i, j] = filtered_pixel
-
-    return filtered_image
+    return imagen_n
 
 
 def normalize(image):
-    # Obtener el valor mínimo y máximo de la imagen
+    # Obtener minimos y maximos 
     min_val = np.min(image)
     max_val = np.max(image)
+    # Escalar 
+    normalizada= ((image - min_val) / (max_val - min_val)) * 255
+    #LA terminación es para que este en terminos de la escala de grises
+    return normalizada.astype(np.uint8)
 
-    # Escalar la imagen al rango [0, 255]
-    normalized_image = ((image - min_val) / (max_val - min_val)) * 255
 
-    return normalized_image.astype(np.uint8)
+def med_filter(imagen, kernel_size):
 
-
-def medianBlur(image, kernel_size):
-    # Obtener dimensiones de la imagen
-    height, width = image.shape
-    # Crear una imagen vacía para almacenar el resultado del desenfoque mediano
-    blurred_image = np.zeros_like(image)
-    # Definir el tamaño del vecindario
-    half_kernel = kernel_size // 2
+    height, width = imagen.shape
+    matriz = np.zeros_like(imagen)
+    
+    margin = kernel_size // 2
     # Iterar sobre todos los píxeles de la imagen
     for i in range(height):
         for j in range(width):
-            # Definir los límites del vecindario
-            i_min = max(i - half_kernel, 0)
-            i_max = min(i + half_kernel + 1, height)
-            j_min = max(j - half_kernel, 0)
-            j_max = min(j + half_kernel + 1, width)
-            # Obtener los valores de los píxeles en el vecindario
-            neighborhood = image[i_min:i_max, j_min:j_max]
-            # Calcular el valor mediano del vecindario
-            median_value = np.median(neighborhood)
-            # Asignar el valor mediano al píxel correspondiente en la imagen desenfocada
-            blurred_image[i, j] = median_value
-    return blurred_image.astype(np.uint8)
+            # Definir el kernel de los vecinos 
+            i_min = max(i - margin, 0)
+            i_max = min(i + margin + 1, height)
+            j_min = max(j - margin, 0)
+            j_max = min(j + margin + 1, width)
+            #Valore de los vecinos en kernel
+            neighborhood = imagen[i_min:i_max, j_min:j_max]
+            # Obtener la media 
+            mediana = np.median(neighborhood)
+            # Asignamos la mediana al pixel
+            matriz[i, j] = mediana
+    return matriz.astype(np.uint8)
 
 
-def espejoY(imagen):
-    # Obtener las dimensiones de la imagen
-    alto, ancho = imagen.shape
-    
-    # Crear una matriz vacía para el espejo
+def espejo(imagen):
+
+    alto = imagen.shape[0]
     espejo = np.empty_like(imagen)
-
-    # Obtener el espejo de la imagen
+    #Traslados de las filas dentro de la nueva matriz
     for fila in range(alto):
         espejo[fila, :] = imagen[fila, ::-1]
+        
     return espejo
 
 
-def convertAbs(arr):
+def convert_Abs(imagen):
+    
     # Normalizar la matriz en el rango 0-255
-    arr_norm = (arr - np.min(arr)) * (255.0 / (np.max(arr) - np.min(arr)))
-    # Redondear los valores normalizados
-    arr_scaled = np.round(arr_norm)
-    # Convertir los valores a tipo de datos sin signo
-    arr_abs = arr_scaled.astype(np.uint8)
-    return arr_abs
+    normalizacion = (imagen - np.min(imagen)) * (255.0 / (np.max(imagen) - np.min(imagen)))
+    nueva = np.round(normalizacion)
+    arr = nueva.astype(np.uint8)
 
-
-def vectorizar(carpeta, label):
-    archivos = os.listdir(carpeta)
-
-    # Lista para almacenar los vectores de las imágenes
-    vectores_imagenes = []
-
-    # Iterar sobre los archivos
-    for archivo in archivos:
-        # Comprobar si es un archivo de imagen
-        #if archivo.endswith(".jpg") or archivo.endswith(".png"):
-            # Ruta completa de la imagen
-            ruta_imagen = os.path.join(carpeta, archivo)
-            
-            # Cargar la imagen
-            imagen = Image.open(ruta_imagen)
-
-            # Redimensiona la imagen a 8x8 píxeles
-            imagen = imagen.resize((50, 125))
-
-            # Convierte la imagen a escala de grises
-            imagen = imagen.convert("L")
-
-            # Convierte la imagen a un array de NumPy
-            array_imagen = np.array(imagen)
-
-            # Aplana el array de imagen a un vector de 1x64
-            vector = array_imagen.flatten()
-            
-            # Crea una lista con la etiqueta y el nombre del archivo
-            etiqueta_archivo = [label, archivo]
-
-            # Agrega la lista al final del vector
-            vector_con_etiqueta_archivo = np.append(vector, etiqueta_archivo)
-
-            # Agrega el vector a la lista de vectores de imágenes
-            vectores_imagenes.append(vector_con_etiqueta_archivo)
-
-    # Convierte la lista de vectores en una matriz de NumPy
-    return np.array(vectores_imagenes)
+    return arr
